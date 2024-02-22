@@ -11,7 +11,6 @@ import numpy as np
 import torch.nn.functional
 from e3nn import nn, o3
 
-# from mace.tools.scatter import scatter_sum
 from torch_scatter import scatter_sum
 
 from .irreps_tools import (
@@ -104,7 +103,6 @@ class EquivariantProductBasisBlock(torch.nn.Module):
         correlation: Union[int, Dict[str, int]],
         element_dependent: bool = True,
         use_sc: bool = True,
-        batch_norm: bool = False,
         num_elements: Optional[int] = None,
     ) -> None:
         super().__init__()
@@ -121,15 +119,12 @@ class EquivariantProductBasisBlock(torch.nn.Module):
         self.linear = o3.Linear(
             target_irreps, target_irreps, internal_weights=True, shared_weights=True,
         )
-        self.batch_norm = nn.BatchNorm(target_irreps) if batch_norm else None
 
     def forward(
         self, node_feats: torch.Tensor, sc: Optional[torch.Tensor], node_attrs: Optional[torch.Tensor]
     ) -> torch.Tensor:
         node_feats = self.symmetric_contractions(node_feats, node_attrs)
         out = self.linear(node_feats)
-        if self.batch_norm:
-            out = self.batch_norm(out)
         if self.use_sc:
             out = out + sc
         return out
