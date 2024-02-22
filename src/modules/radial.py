@@ -1,12 +1,11 @@
 ###########################################################################################
 # Radial basis and cutoff
 # Authors: Ilyes Batatia, Gregor Simm
-# This program is distributed under the MIT License (see MIT.md)
+# This program is distributed under the ASL License (see ASL.md)
 ###########################################################################################
 
 import numpy as np
 import torch
-from e3nn.util.jit import compile_mode
 
 
 class BesselBasis(torch.nn.Module):
@@ -41,7 +40,7 @@ class BesselBasis(torch.nn.Module):
             torch.tensor(np.sqrt(2.0 / r_max), dtype=torch.get_default_dtype()),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # [..., 1]
+    def forward(self, x: torch.Tensor,) -> torch.Tensor:  # [..., 1]
         numerator = torch.sin(self.bessel_weights * x)  # [..., num_basis]
         return self.prefactor * (numerator / x)
 
@@ -69,13 +68,17 @@ class PolynomialCutoff(torch.nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # yapf: disable
         envelope = (
                 1.0
                 - ((self.p + 1.0) * (self.p + 2.0) / 2.0) * torch.pow(x / self.r_max, self.p)
                 + self.p * (self.p + 2.0) * torch.pow(x / self.r_max, self.p + 1)
                 - (self.p * (self.p + 1.0) / 2) * torch.pow(x / self.r_max, self.p + 2)
         )
-        return envelope * (x < self.r_max)
+        # yapf: enable
+
+        # noinspection PyUnresolvedReferences
+        return envelope * (x < self.r_max).type(torch.get_default_dtype())
 
     def __repr__(self):
         return f"{self.__class__.__name__}(p={self.p}, r_max={self.r_max})"
