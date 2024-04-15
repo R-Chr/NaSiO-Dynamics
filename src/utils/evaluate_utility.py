@@ -28,7 +28,7 @@ def test(model, test_loader, device, train_index, Na_ind):
     sample_times = [10, 100, 1000, 10000, 50000, 100000, 500000, 1000000]
     propensities = []
     pred_propensities = []
-    if train_index == "all":
+    if train_index in ("all", "all-10"):
         time_index = []
         
     for data in test_loader:
@@ -37,10 +37,10 @@ def test(model, test_loader, device, train_index, Na_ind):
             data = data.to(device)
             propensities.append(data.y[Na_ind].T.cpu().numpy())
             pred_propensities.append(model(data)[Na_ind].cpu().numpy())
-            if train_index == "all":
+            if train_index in ("all", "all-10"):
                 time_index.append(data.time_features[0].cpu().numpy())
                 
-    if train_index == "all":
+    if train_index in ("all", "all-10"):
         unique_time = np.unique(time_index)
         PCC = []
         pred_all = []
@@ -61,7 +61,7 @@ def test(model, test_loader, device, train_index, Na_ind):
     
     return prop_all, pred_all, PCC, time
 
-def eval_plot(y_pred, y_test, ax=None):
+def eval_plot(y_pred, y_test, pcc, ax=None):
     if ax is None:
         ax = plt.gca()
         
@@ -81,6 +81,7 @@ def eval_plot(y_pred, y_test, ax=None):
     ax.set_ylim(0,tot_max)
     ax.xaxis.set_major_locator(plt.MaxNLocator(4))
     ax.yaxis.set_major_locator(plt.MaxNLocator(4))
+    ax.set_title(r"$\rho$ = " +  f"{'%.2f' % pcc}", loc="left", x = 0.05, y = 0.87, fontsize=10)
     return ep
     
 def density_plot(y_pred, y_test, ax=None):
